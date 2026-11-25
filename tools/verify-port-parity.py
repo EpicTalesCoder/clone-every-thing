@@ -8,7 +8,7 @@ Exits 0 ONLY if all hard verification gates pass:
   2. Valid non-empty javap bytecode dumps + decompiled Java sources + CLASS-INDEX / CLASS-RESPONSIBILITIES
   3. Explicit decompiled Java citations (Class.java:line) in web-port/*.js (forbids from-memory rewrites)
   4. Real original asset usage (drawImage + assets/) and zero unresolved UNVERIFIED markers
-  5. All JS files pass `node --check`, tests pass `node --test`, and game is registered in games-manifest.json
+  5. All JS files pass `node --check` and tests pass `node --test`
 """
 import argparse
 import json
@@ -25,10 +25,10 @@ def resolve_game_dir(target: str) -> tuple[str, pathlib.Path]:
     if cand.is_dir() and ((cand / "original").is_dir() or (cand / "web-port").is_dir()):
         resolved = cand.resolve()
         return resolved.name, resolved
-    for base in (ROOT.parent / f"{target}-clone", ROOT.parent / target, ROOT / "games" / target):
+    for base in (ROOT / "games" / target, ROOT / "games" / f"{target}-clone"):
         if base.is_dir():
             return target, base.resolve()
-    return target, (ROOT.parent / f"{target}-clone").resolve()
+    return target, (ROOT / "games" / target).resolve()
 
 
 def main():

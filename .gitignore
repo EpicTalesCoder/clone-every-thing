@@ -10,6 +10,9 @@ node_modules
 *.egg-info/
 *.egg
 
+# Standalone per-game repositories (each games/<slug>/ has its own .git & remote)
+/games/
+
 # Local J2ME JDK & decompiler downloads
 tools/tool-downloads/
 

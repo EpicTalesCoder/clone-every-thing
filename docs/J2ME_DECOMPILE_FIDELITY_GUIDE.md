@@ -1,6 +1,6 @@
 # Hướng dẫn Decompile & Port Game J2ME 1:1 Giống Mã Nguồn Gốc
 
-> **Mục tiêu**: Đảm bảo mọi game `.jar` (MIDP 2.0) trong từng project độc lập (`../<slug>-clone/web-port/`) **chạy, vẽ và vận hành giống bản gốc 1:1** (như chuẩn của `../bo-lac-thoi-tien-su-clone`), **TUYỆT ĐỐI KHÔNG** viết lại bản "nhái theo trí nhớ" bằng hình vuông `fillRect` hay thông số tự bịa.
+> **Mục tiêu**: Đảm bảo mọi game `.jar` (MIDP 2.0) trong từng repo game độc lập `games/<slug>/web-port/` (nằm trong `games/` được `.gitignore` ở repo REA, mỗi game push ra repo riêng) **chạy, vẽ và vận hành giống bản gốc 1:1** (như chuẩn của `games/bo-lac-thoi-tien-su`), **TUYỆT ĐỐI KHÔNG** viết lại bản "nhái theo trí nhớ" bằng hình vuông `fillRect` hay thông số tự bịa.
 
 ---
 
@@ -104,7 +104,7 @@ Mỗi game nên tách rõ tối thiểu 4 file để dễ kiểm tra và sửa l
 ### Bước 6: Đối chiếu thị giác (Visual Oracle) & Cổng kiểm duyệt 11 điểm
 
 Trước khi coi một game port là hoàn thành, kiểm tra đủ **11 tiêu chí**:
-1. Mở được ngay trên trình duyệt & Portal (`python3 tools/build-portal.py`), không có lỗi `404` / `TypeError` trong Console.
+1. Mở được ngay trên trình duyệt (`npm --prefix games/<slug> start` / `python3 tools/build-dist.py`), không có lỗi `404` / `TypeError` trong Console.
 2. Màn hình Title / Menu sử dụng **đúng ảnh nền, logo, font/nút gốc** từ `.jar` (không vẽ khung CSS/HTML thay thế sơ sài).
 3. Bản đồ màn 1 khớp **100% bố cục địa hình, vị trí nhà và quân** với file map gốc trong `.jar`.
 4. Mọi nhân vật/quân lính vẽ bằng **đúng sprite sheet & frame animation gốc** (đi bộ, đứng yên, tấn công, chết), không dùng hình khối `fillRect` thay thế.

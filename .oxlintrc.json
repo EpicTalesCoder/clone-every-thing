@@ -279,7 +279,8 @@
     ".codex",
     ".devin",
     ".factory",
-    "third_party"
+    "third_party",
+    "games"
   ],
   "options": {
     "reportUnusedDisableDirectives": "error"

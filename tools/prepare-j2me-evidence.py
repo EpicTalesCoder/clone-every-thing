@@ -51,7 +51,7 @@ def find_decompiler_jar(explicit: str, patterns: list[str]) -> str:
     search_dirs = [
         ROOT / "tools",
         ROOT / "tools" / "tool-downloads",
-        ROOT.parent / "j2me-cpp-porter" / "skills" / "jar-to-cpp-port" / "scripts",
+        ROOT / "games" / "j2me-cpp-porter" / "skills" / "jar-to-cpp-port" / "scripts",
         pathlib.Path.home() / ".gemini" / "config" / "plugins" / "j2me-cpp-porter" / "skills" / "jar-to-cpp-port" / "scripts",
         pathlib.Path.home() / ".cache",
         pathlib.Path.home() / "Downloads",
@@ -226,15 +226,15 @@ def resolve_game_dir(target: str) -> pathlib.Path:
     cand = pathlib.Path(target).expanduser()
     if cand.is_dir() and (cand / "original").is_dir():
         return cand.resolve()
-    for base in (ROOT.parent / f"{target}-clone", ROOT.parent / target, ROOT / "games" / target):
+    for base in (ROOT / "games" / target, ROOT / "games" / f"{target}-clone"):
         if (base / "original").is_dir():
             return base.resolve()
-    return (ROOT.parent / f"{target}-clone").resolve()
+    return (ROOT / "games" / target).resolve()
 
 
 def main():
     parser = argparse.ArgumentParser(description="Prepare full J2ME reverse-engineering evidence for a game project.")
-    parser.add_argument("target", help="Game project path or slug (e.g. ../total-tournament-clone or total-tournament)")
+    parser.add_argument("target", help="Game slug under games/ or project path (e.g. total-tournament)")
     parser.add_argument("--vineflower", default="", help="Optional path to vineflower.jar")
     parser.add_argument("--cfr", default="", help="Optional path to cfr.jar")
     args = parser.parse_args()

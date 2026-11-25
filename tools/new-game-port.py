@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Scaffold a standalone J2ME (.jar) reverse-engineering & HTML5 web-port project
-outside the REA repository (default: ../<slug>-clone/).
+inside games/<slug>/ (gitignored by REA; initialized with its own git repo).
 
 Usage:
   python3 tools/new-game-port.py <slug> <path-to-jar> ["Display Title"] [--out <dir>]
@@ -11,6 +11,7 @@ import hashlib
 import json
 import pathlib
 import shutil
+import subprocess
 import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -23,11 +24,11 @@ def sha256_file(path: pathlib.Path) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Scaffold a standalone J2ME clone project.")
+    parser = argparse.ArgumentParser(description="Scaffold an independent J2ME game project under games/<slug>/.")
     parser.add_argument("slug", help="Game slug (e.g. my-game)")
     parser.add_argument("jar", help="Path to original .jar file")
     parser.add_argument("title", nargs="?", default="", help="Optional display title")
-    parser.add_argument("--out", default="", help="Optional target project directory (default: ../<slug>-clone)")
+    parser.add_argument("--out", default="", help="Optional target project directory (default: games/<slug>)")
     args = parser.parse_args()
 
     slug = args.slug.strip().lower()
@@ -37,7 +38,7 @@ def main():
         raise SystemExit(f"Error: JAR file not found: {jar_src}")
 
     repo_name = slug if slug.endswith("-clone") else f"{slug}-clone"
-    game_dir = pathlib.Path(args.out).expanduser().resolve() if args.out else (ROOT.parent / repo_name)
+    game_dir = pathlib.Path(args.out).expanduser().resolve() if args.out else (ROOT / "games" / slug)
     orig_dir = game_dir / "original"
     analysis_dir = game_dir / "analysis"
     recovered_dir = analysis_dir / "recovered"
@@ -107,8 +108,15 @@ def main():
     if not pkg_path.exists():
         pkg_path.write_text(json.dumps(pkg, indent=2) + "\n", encoding="utf-8")
 
-    print(f"[3/4] Initialized standalone web-port project at {game_dir}")
-    print(f"[4/4] Next: python3 tools/prepare-j2me-evidence.py {game_dir}")
+    gitignore_path = game_dir / ".gitignore"
+    if not gitignore_path.exists():
+        gitignore_path.write_text("dist/\nbuild/\nnode_modules/\n__pycache__/\n.DS_Store\n", encoding="utf-8")
+
+    if not (game_dir / ".git").exists():
+        subprocess.run(["git", "-C", str(game_dir), "init", "-b", "main"], check=True)
+
+    print(f"[3/4] Initialized standalone git project at {game_dir} (target remote: {repo_name})")
+    print(f"[4/4] Next: python3 tools/prepare-j2me-evidence.py {slug}")
 
 
 if __name__ == "__main__":

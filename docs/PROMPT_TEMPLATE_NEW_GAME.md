@@ -7,7 +7,7 @@
 Chỉ cần thay `<tên game hoặc slug>` (ví dụ `total-tournament`, `ancient-empires-2`, `green-farm-3` hoặc kèm đường dẫn file `.jar` mới) rồi dán nguyên đoạn sau cho AI:
 
 ```text
-Hãy decompile và port 1:1 game <tên game hoặc slug> tại thư mục project độc lập `../<slug>-clone/` (tách riêng khỏi repo REA chính).
+Hãy decompile và port 1:1 game <tên game hoặc slug> tại thư mục project độc lập `games/<slug>/` (thư mục `games/` được REA gitignore; mọi commit/push của game thực hiện trong git riêng `git -C games/<slug>`).
 
 BẮT BUỘC làm đúng theo thứ tự sau (không bỏ bước, không tự bịa game theo trí nhớ):
 1. ĐỌC TÀI LIỆU CHUẨN TRƯỚC:
@@ -16,19 +16,19 @@ BẮT BUỘC làm đúng theo thứ tự sau (không bỏ bước, không tự b
    - .agents/skills/j2me-reverse-and-web-port/SKILL.md
    - .agents/skills/j2me-reverse-and-web-port/references/decompile-to-source-parity.md
 2. CHUẨN BỊ BẰNG CHỨNG TỰ ĐỘNG:
-   - Nếu là file .jar mới chưa có project riêng, chạy `python3 tools/new-game-port.py <slug> <path.jar> "<Tên Game>"` (tạo project độc lập tại `../<slug>-clone/`).
-   - Chạy `python3 tools/prepare-j2me-evidence.py ../<slug>-clone` để xuất đầy đủ `recovered/`, `bytecode-evidence/*.javap.txt`, `decompiled-*/*.java` và `CLASS-INDEX.md`.
-   - Tuyệt đối KHÔNG sửa file `../<slug>-clone/original/*.jar`.
+   - Nếu là file .jar mới chưa có project riêng, chạy `python3 tools/new-game-port.py <slug> <path.jar> "<Tên Game>"` (tạo repo độc lập tại `games/<slug>/`).
+   - Chạy `python3 tools/prepare-j2me-evidence.py <slug>` để xuất đầy đủ `recovered/`, `bytecode-evidence/*.javap.txt`, `decompiled-*/*.java` và `CLASS-INDEX.md`.
+   - Tuyệt đối KHÔNG sửa file `games/<slug>/original/*.jar`.
 3. TỰ LẬP KẾ HOẠCH 4 CHẶNG RÕ RÀNG VÀ LÀM TỪNG CHẶNG:
-   - Chặng 1 (Phân tích — chưa sửa web-port): Viết/cập nhật `../<slug>-clone/analysis/CLASS-RESPONSIBILITIES.md` (vai trò từng class, state machine, cấu trúc binary map/sprite/BSprite/text, công thức gốc kèm `Class.java:line`).
+   - Chặng 1 (Phân tích — chưa sửa web-port): Viết/cập nhật `games/<slug>/analysis/CLASS-RESPONSIBILITIES.md` (vai trò từng class, state machine, cấu trúc binary map/sprite/BSprite/text, công thức gốc kèm `Class.java:line`).
    - Chặng 2 (Giải mã & Vẽ 1:1): Viết decoder đọc trực tiếp map/sprite/palette/text gốc từ `assets/` + port hàm `paint()` vào `render-original.js` (đúng Anchor, 8 phép `drawRegionMIDP`, `setClip`, `imageSmoothingEnabled = false`, KHÔNG dùng `fillRect` thay sprite/map gốc).
    - Chặng 3 (Gameplay + Multiplayer chuẩn mã gốc): Port vòng lặp `run()/tick()`, điều khiển (chuột + phím), chiến đấu/kinh tế/AI/màn chơi/lưu game vào `game.js` với comment dẫn chiếu `// Port of Class.java:line`, **kèm chế độ Chơi nhiều người 2–4 người mở được cả từ Menu chính trong game lẫn thanh công cụ** (`CHƠI ONLINE` / `MULTIPLAYER` + `#mp-lobby`, `multiplayer.js`, Host Web Worker, Quad Transport `/api/mp` / `BroadcastChannel` / `ntfy` / MQTT-WSS, mã phòng có tiền tố riêng từng game, `?mp=<code>`).
-   - Chặng 4 (Cổng kiểm duyệt cứng & Build): Viết unit test (decoder + gameplay + `multiplayer.test.mjs`) + chạy `python3 tools/verify-port-parity.py ../<slug>-clone` (BẮT BUỘC ra `RESULT: PASS`, exit 0), chạy `npm --prefix ../<slug>-clone run build`, kiểm tra trực quan 1 tab + đồng bộ 2 tab `?mp=` trên localhost (0 lỗi Console) rồi mới báo hoàn thành.
+   - Chặng 4 (Cổng kiểm duyệt cứng & Build): Viết unit test (decoder + gameplay + `multiplayer.test.mjs`) + chạy `python3 tools/verify-port-parity.py <slug>` (BẮT BUỘC ra `RESULT: PASS`, exit 0), chạy `npm --prefix games/<slug> run build`, kiểm tra trực quan 1 tab + đồng bộ 2 tab `?mp=` trên localhost (0 lỗi Console) rồi mới báo hoàn thành.
 
 QUY TẮC CHỐNG TỰ BỊA (TUYỆT ĐỐI TUÂN THỦ):
 - Mọi bảng map, chỉ số lính, sprite/BSprite/palette, text phải giải mã trực tiếp từ file gốc trong `.jar` — CẤM gõ tay hay tự bịa thông số.
 - Chỗ nào code decompile bị rối/mơ hồ: bắt buộc đọc thẳng `bytecode-evidence/<Class>.javap.txt` để đối chiếu. Nếu vẫn chưa chắc 100%, ghi rõ `CHƯA XÁC MINH` và hỏi lại tôi — TUYỆT ĐỐI KHÔNG tự đoán công thức thay thế.
-- Không được báo xong chừng nào `python3 tools/verify-port-parity.py ../<slug>-clone` chưa PASS.
+- Không được báo xong chừng nào `python3 tools/verify-port-parity.py <slug>` chưa PASS.
 
 Bắt đầu từ Bước 1 & 2, lập kế hoạch 4 chặng rồi tự chạy lần lượt từ Chặng 1 đến Chặng 4 cho tới khi PASS toàn bộ cổng kiểm duyệt.
 ```
@@ -110,7 +110,7 @@ Dán lần lượt từng lệnh nhỏ (mỗi lượt chỉ làm 1 nhóm cơ ch�
 Hoàn thiện games/<slug>/web-port/:
 1. Đảm bảo chạy tốt cả trên máy tính (chuột + phím), mobile, và Discord Activity (fallback Canvas 2D nếu CDN bị chặn), đồng thời có đầy đủ chế độ Chơi nhiều người (`multiplayer.js` + `#mp-lobby`, `?mp=<code>`, Host Web Worker, Quad Transport `/api/mp` / `BroadcastChannel` / `ntfy` / MQTT-WSS).
 2. Viết bộ unit test games/<slug>/web-port/tests/*.test.mjs kiểm tra: giữ nguyên original/*.jar, giải mã map/sprite/text thành công, đồng bộ multiplayer, không lỗi cú pháp.
-3. Chạy node --check, node --test, python3 tools/verify-port-parity.py <slug>, python3 tools/build-portal.py và QA đồng bộ 2 tab rồi xác nhận pass 100%.
+3. Chạy node --check, node --test, python3 tools/verify-port-parity.py <slug>, npm --prefix games/<slug> run build và QA đồng bộ 2 tab rồi xác nhận pass 100%.
 ```
 
 ---
@@ -124,5 +124,5 @@ Game games/<slug>/web-port/ hiện đang chạy sai và không giống bản g�
 Đọc docs/J2ME_DECOMPILE_FIDELITY_GUIDE.md và .agents/rules/j2me-port-fidelity.md.
 1. Đối chiếu games/<slug>/web-port/ hiện tại với mã decompile trong games/<slug>/analysis/ (nếu thiếu bytecode/decompile thì chạy `python3 tools/prepare-j2me-evidence.py <slug>` trước).
 2. Liệt kê rõ những chỗ bản web-port hiện tại đang tự bịa / thiếu asset gốc / sai công thức so với Java gốc.
-3. Thay thế từng phần bằng code port trực tiếp từ Java gốc (ưu tiên: 1. Giải mã đúng sprite/map/animation gốc → 2. Render 1:1 → 3. Gameplay & công thức gốc), ghi rõ comment `// Port of Class.java:line`, rồi verify trên localhost + `python3 tools/build-portal.py`.
+3. Thay thế từng phần bằng code port trực tiếp từ Java gốc (ưu tiên: 1. Giải mã đúng sprite/map/animation gốc → 2. Render 1:1 → 3. Gameplay & công thức gốc), ghi rõ comment `// Port of Class.java:line`, rồi verify trên localhost + `npm --prefix games/<slug> run build` (sau đó commit/push trong `git -C games/<slug>`).
 ```
