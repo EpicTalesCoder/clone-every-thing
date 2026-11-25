@@ -1,8 +1,0 @@
-headless arguments [[--headless], [-Xautotest:file:///Users/kd-qa-0294/Desktop/REV/rea/game/rebuild-attempt/original-emulator-test.jad], [--quit]]
-	  org.microemu.app.Headless.main(Headless.java:112)
-AutoTests open jad [file:///Users/kd-qa-0294/Desktop/REV/rea/game/rebuild-attempt/original-emulator-test.jad]
-	  org.microemu.app.Common$1.run(Common.java:261)
-openJar [file:///var/folders/53/npryrs0x2cjc_7pf6y7b7qhr0000gn/T/microemulator-apps-kd-qa-0294/me2-app-11335272431743714474.jar]
-	  org.microemu.app.Common.loadJar(Common.java:554)
-AutoTests start class [tribes]
-	  org.microemu.app.Common$1.run(Common.java:300)

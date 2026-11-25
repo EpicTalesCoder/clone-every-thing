@@ -1,9 +1,0 @@
-Summary for /Users/kd-qa-0294/Desktop/REV/j2c/j2me-cpp-porter/ancient_empires_2_240x320-21461.jar
-Decompiled with CFR 0.152
-
-
-i
-----------------------------
-
-run()
-  Unable to fully structure code

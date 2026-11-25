@@ -10,12 +10,8 @@ node_modules
 *.egg-info/
 *.egg
 
-# Local J2ME JDK downloads & heavy emulator capture scratch
-game/tool-downloads/
-games/*/analysis/rebuild-attempt/captures/
-games/*/analysis/rebuild-attempt/freej2me*
-games/*/analysis/rebuild-attempt/*.jar
-games/*/analysis/rebuild-attempt/*-classes*/
+# Local J2ME JDK & decompiler downloads
+tools/tool-downloads/
 
 # Virtual environments
 .venv/

@@ -1,9 +1,0 @@
-Summary for /Users/kd-qa-0294/Desktop/REV/rea/games/ancient-empires-2/original/ancient-empires-2.jar
-Decompiled with CFR 0.152
-
-
-i
-----------------------------
-
-run()
-  Unable to fully structure code

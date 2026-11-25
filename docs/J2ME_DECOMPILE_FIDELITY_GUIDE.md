@@ -1,6 +1,6 @@
 # Hướng dẫn Decompile & Port Game J2ME 1:1 Giống Mã Nguồn Gốc
 
-> **Mục tiêu**: Đảm bảo mọi game `.jar` (MIDP 2.0) trong `games/<slug>/web-port/` **chạy, vẽ và vận hành giống bản gốc 1:1** (như chuẩn của `games/bo-lac-thoi-tien-su`), **TUYỆT ĐỐI KHÔNG** viết lại bản "nhái theo trí nhớ" bằng hình vuông `fillRect` hay thông số tự bịa.
+> **Mục tiêu**: Đảm bảo mọi game `.jar` (MIDP 2.0) trong từng project độc lập (`../<slug>-clone/web-port/`) **chạy, vẽ và vận hành giống bản gốc 1:1** (như chuẩn của `../bo-lac-thoi-tien-su-clone`), **TUYỆT ĐỐI KHÔNG** viết lại bản "nhái theo trí nhớ" bằng hình vuông `fillRect` hay thông số tự bịa.
 
 ---
 
@@ -119,7 +119,6 @@ Trước khi coi một game port là hoàn thành, kiểm tra đủ **11 tiêu c
 ---
 
 ## 3. Tài liệu liên quan trong kho mã nguồn
-- Quy trình tổng thể & kiến trúc monorepo: [PROJECT_DESIGN_AND_ROADMAP.md](./PROJECT_DESIGN_AND_ROADMAP.md)
 - Skill tự động cho AI Agent: [.agents/skills/j2me-reverse-and-web-port/SKILL.md](../.agents/skills/j2me-reverse-and-web-port/SKILL.md)
 - Tham chiếu lỗi thực tế & mẫu dịch chuẩn: [.agents/skills/j2me-reverse-and-web-port/references/decompile-to-source-parity.md](../.agents/skills/j2me-reverse-and-web-port/references/decompile-to-source-parity.md)
 - Luật bắt buộc cho AI Agent khi port game: [.agents/rules/j2me-port-fidelity.md](../.agents/rules/j2me-port-fidelity.md)

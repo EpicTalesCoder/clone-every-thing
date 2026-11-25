@@ -1,6 +1,0 @@
-Summary for games/total-tournament/original/total-tournament.jar
-Decompiled with Vineflower 1.12.0 (slim), JRE 21 — làm lại vì CFR fails
-structure ở 3 chỗ: b.a(String), e.i(), e.run() (xem decompiled-cfr/summary.txt).
-Vineflower: 14/14 class sạch 0 error. Ảnh decode kèm = kết quả pipeline jar->png của VF,
-chỉ mang tính tham khảo; bản raw chuẩn nằm ở recovered/ và analysis/data/.
-

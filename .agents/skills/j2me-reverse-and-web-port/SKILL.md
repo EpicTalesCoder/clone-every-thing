@@ -11,16 +11,16 @@ description: >-
 
 This skill distills practical lessons learned from reverse-engineering and porting J2ME `.jar` games (Prehistoric Tribes, Total Tournament, Green Farm 3, Ancient Empires 2) into zero-JVM HTML5 Canvas/WebGL web ports with 1:1 menu/HUD/gameplay parity, multiplayer, and Discord Activity support.
 
-> **Gold-Standard Reference Ports**: Study `games/total-tournament/web-port/` (bitmap font + VI diacritics, sprite HUD, `curs.png`/`ld.png` menus, `wpn`/`wlg` bot AI, Chrome CDP visual QA) alongside `games/bo-lac-thoi-tien-su/web-port/`.
+> **Gold-Standard Reference Ports**: Study `../total-tournament-clone/web-port/` (bitmap font + VI diacritics, sprite HUD, `curs.png`/`ld.png` menus, `wpn`/`wlg` bot AI, Chrome CDP visual QA) alongside `../bo-lac-thoi-tien-su-clone/web-port/`.
 
 ---
 
 ## Golden Rules
 
-1. **Never modify original binaries**: Keep `games/<slug>/original/*.jar` byte-for-byte intact and record SHA-256 hashes in `analysis/ASSETS-SHA256.txt`.
+1. **Never modify original binaries**: Keep `../<slug>-clone/original/*.jar` byte-for-byte intact and record SHA-256 hashes in `analysis/ASSETS-SHA256.txt`.
 2. **Decode, never guess**: Read maps, sprite tables, animation lengths, building specs, skill offsets, and strings directly from the original binary packs (`/a`, `/ma`, `/pd0`, `/sa`, `EN.*`, etc.).
 3. **Verify every claim with bytecode or live tests**: Decompilers drop casts, misread signed bytes, or flatten switches — always cross-check subtle logic against `javap -c -p -v`.
-4. **Preserve test invariants**: Keep source `web-port/index.html` clean (e.g. `<script type="module" src="game.js"></script>`) and apply cache-busting `?v=<ts>` only during build in `tools/build-portal.py`.
+4. **Preserve test invariants**: Keep source `web-port/index.html` clean (e.g. `<script type="module" src="game.js"></script>`) and apply cache-busting `?v=<ts>` only during build in `tools/build-dist.py`.
 
 ---
 
@@ -95,19 +95,18 @@ This skill distills practical lessons learned from reverse-engineering and porti
    - Run an automated local HTTP + Chrome headless CDP (`--headless=new --remote-debugging-port=0` with Node `http` + `WebSocket`) or Playwright script stored in scratch space (outside the repo) that walks through **Startup -> Title -> Every Menu Screen (VI & EN) -> Config -> Map/Char Select -> Loading -> Multiple Arenas/Modes (HUD, firing, effects) -> Pause -> Scoreboard**.
    - **Include a 2-Tab Multiplayer E2E Check**: open Tab 1 (Host creates room), open Tab 2 (`?mp=<code>` auto-joins), swap faction, Ready both, wait for Countdown launch, send remote actions/keys on Tab 2 and Host actions on Tab 1, verify synchronized actor coordinates/projectiles/HUD across both tabs, inspect MP lobby + live 2-tab screenshots via `read_file`, and confirm `consoleErrors.length === 0`.
 4. **Final Verification & Pre-push Checklist**:
-   - `node --check` on all modified `.js` / `.mjs` files
-   - `node --test games/<slug>/web-port/tests/*.test.mjs` (unit, parity, AND `multiplayer.test.mjs` regression tests)
-   - `python3 tools/verify-port-parity.py <slug>` (MUST exit 0 / `RESULT: PASS`)
-   - `python3 tools/build-portal.py`
+   - `node --check` on all modified `.js` / `.mjs` files in the standalone `../<slug>-clone/web-port/` repo
+   - `node --test ../<slug>-clone/web-port/tests/*.test.mjs` (unit, parity, AND `multiplayer.test.mjs` regression tests)
+   - `python3 tools/verify-port-parity.py ../<slug>-clone` (MUST exit 0 / `RESULT: PASS`)
+   - `npm --prefix ../<slug>-clone run build`
    - Verify no oversized files (>25MB / JDK downloads / emulator capture dumps / scratch scripts) are staged.
 
 For detailed bug case studies and concrete code patterns, read:
 - [references/decompile-to-source-parity.md](./references/decompile-to-source-parity.md) — exact Java MIDP 2.0 → JS translation helpers (`drawRegionMIDP`, signed byte/short, BSprite/Macrospace/HandyGames pack patterns, citation discipline).
 - [references/pitfalls-and-patterns.md](./references/pitfalls-and-patterns.md) — real bugs encountered in this monorepo and their verified fixes.
 - [docs/J2ME_DECOMPILE_FIDELITY_GUIDE.md](../../../docs/J2ME_DECOMPILE_FIDELITY_GUIDE.md) — full Vietnamese guide for humans & AI agents.
-- **Bundled Offline Decompilers & Native C++/QA References** (`games/j2me-cpp-porter/`):
-  - `games/j2me-cpp-porter/skills/jar-to-cpp-port/scripts/decompile_jar.sh` (with local `vineflower-1.12.0.jar` + `cfr-0.152.jar`)
-  - `games/j2me-cpp-porter/skills/jar-to-cpp-port/resources/prepare_assets.py` (magic-byte inspection, stripped-header PNG `IHDR`/`PLTE`/`tRNS`/`IDAT` CRC reconstruction & `zlib` verification)
-  - `games/j2me-cpp-porter/skills/jar-to-cpp-port/references/vietnamese-ui-layout.md` (lookahead word-wrap, `textBounds` separation, midpoint anti-overlap, calm auto-scroll)
-  - `games/j2me-cpp-porter/skills/jar-to-cpp-port/references/desktop-pitfalls-and-qa.md` (floor-div negative scroll `>> k`, zero-ghosting camera+entity sync lerp, keypad scancode ownership, focus-lost vs menu-toggle input clearing, ASan+UBSan QA)
-  - `games/port_java_to_switch_nro_plan.md` (cross-platform C++17 `SDL2` + `libnx` Nintendo Switch `.nro` architecture & gamepad/widescreen mapping)
+- **Bundled Offline Decompilers & Native C++/QA References** (`../j2me-cpp-porter/`):
+  - `../j2me-cpp-porter/skills/jar-to-cpp-port/scripts/decompile_jar.sh` (with local `vineflower-1.12.0.jar` + `cfr-0.152.jar`)
+  - `../j2me-cpp-porter/skills/jar-to-cpp-port/resources/prepare_assets.py` (magic-byte inspection, stripped-header PNG `IHDR`/`PLTE`/`tRNS`/`IDAT` CRC reconstruction & `zlib` verification)
+  - `../j2me-cpp-porter/skills/jar-to-cpp-port/references/vietnamese-ui-layout.md` (lookahead word-wrap, `textBounds` separation, midpoint anti-overlap, calm auto-scroll)
+  - `../j2me-cpp-porter/skills/jar-to-cpp-port/references/desktop-pitfalls-and-qa.md` (floor-div negative scroll `>> k`, zero-ghosting camera+entity sync lerp, keypad scancode ownership, focus-lost vs menu-toggle input clearing, ASan+UBSan QA)

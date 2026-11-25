@@ -7,7 +7,7 @@
 Chỉ cần thay `<tên game hoặc slug>` (ví dụ `total-tournament`, `ancient-empires-2`, `green-farm-3` hoặc kèm đường dẫn file `.jar` mới) rồi dán nguyên đoạn sau cho AI:
 
 ```text
-Hãy decompile và port 1:1 game <tên game hoặc slug> lên web-port trong monorepo này.
+Hãy decompile và port 1:1 game <tên game hoặc slug> tại thư mục project độc lập `../<slug>-clone/` (tách riêng khỏi repo REA chính).
 
 BẮT BUỘC làm đúng theo thứ tự sau (không bỏ bước, không tự bịa game theo trí nhớ):
 1. ĐỌC TÀI LIỆU CHUẨN TRƯỚC:
@@ -16,19 +16,19 @@ BẮT BUỘC làm đúng theo thứ tự sau (không bỏ bước, không tự b
    - .agents/skills/j2me-reverse-and-web-port/SKILL.md
    - .agents/skills/j2me-reverse-and-web-port/references/decompile-to-source-parity.md
 2. CHUẨN BỊ BẰNG CHỨNG TỰ ĐỘNG:
-   - Nếu là file .jar mới chưa có trong games/, chạy `python3 tools/new-game-port.py <slug> <path.jar> "<Tên Game>"`.
-   - Chạy `python3 tools/prepare-j2me-evidence.py <slug>` để xuất đầy đủ `recovered/`, `bytecode-evidence/*.javap.txt`, `decompiled-*/*.java` và `CLASS-INDEX.md`.
-   - Tuyệt đối KHÔNG sửa file `games/<slug>/original/*.jar`.
+   - Nếu là file .jar mới chưa có project riêng, chạy `python3 tools/new-game-port.py <slug> <path.jar> "<Tên Game>"` (tạo project độc lập tại `../<slug>-clone/`).
+   - Chạy `python3 tools/prepare-j2me-evidence.py ../<slug>-clone` để xuất đầy đủ `recovered/`, `bytecode-evidence/*.javap.txt`, `decompiled-*/*.java` và `CLASS-INDEX.md`.
+   - Tuyệt đối KHÔNG sửa file `../<slug>-clone/original/*.jar`.
 3. TỰ LẬP KẾ HOẠCH 4 CHẶNG RÕ RÀNG VÀ LÀM TỪNG CHẶNG:
-   - Chặng 1 (Phân tích — chưa sửa web-port): Viết/cập nhật `games/<slug>/analysis/CLASS-RESPONSIBILITIES.md` (vai trò từng class, state machine, cấu trúc binary map/sprite/BSprite/text, công thức gốc kèm `Class.java:line`).
+   - Chặng 1 (Phân tích — chưa sửa web-port): Viết/cập nhật `../<slug>-clone/analysis/CLASS-RESPONSIBILITIES.md` (vai trò từng class, state machine, cấu trúc binary map/sprite/BSprite/text, công thức gốc kèm `Class.java:line`).
    - Chặng 2 (Giải mã & Vẽ 1:1): Viết decoder đọc trực tiếp map/sprite/palette/text gốc từ `assets/` + port hàm `paint()` vào `render-original.js` (đúng Anchor, 8 phép `drawRegionMIDP`, `setClip`, `imageSmoothingEnabled = false`, KHÔNG dùng `fillRect` thay sprite/map gốc).
    - Chặng 3 (Gameplay + Multiplayer chuẩn mã gốc): Port vòng lặp `run()/tick()`, điều khiển (chuột + phím), chiến đấu/kinh tế/AI/màn chơi/lưu game vào `game.js` với comment dẫn chiếu `// Port of Class.java:line`, **kèm chế độ Chơi nhiều người 2–4 người mở được cả từ Menu chính trong game lẫn thanh công cụ** (`CHƠI ONLINE` / `MULTIPLAYER` + `#mp-lobby`, `multiplayer.js`, Host Web Worker, Quad Transport `/api/mp` / `BroadcastChannel` / `ntfy` / MQTT-WSS, mã phòng có tiền tố riêng từng game, `?mp=<code>`).
-   - Chặng 4 (Cổng kiểm duyệt cứng & Build): Viết unit test (decoder + gameplay + `multiplayer.test.mjs`) + chạy `python3 tools/verify-port-parity.py <slug>` (BẮT BUỘC ra `RESULT: PASS`, exit 0), chạy `python3 tools/build-portal.py`, kiểm tra trực quan 1 tab + đồng bộ 2 tab `?mp=` trên localhost (0 lỗi Console) rồi mới báo hoàn thành.
+   - Chặng 4 (Cổng kiểm duyệt cứng & Build): Viết unit test (decoder + gameplay + `multiplayer.test.mjs`) + chạy `python3 tools/verify-port-parity.py ../<slug>-clone` (BẮT BUỘC ra `RESULT: PASS`, exit 0), chạy `npm --prefix ../<slug>-clone run build`, kiểm tra trực quan 1 tab + đồng bộ 2 tab `?mp=` trên localhost (0 lỗi Console) rồi mới báo hoàn thành.
 
 QUY TẮC CHỐNG TỰ BỊA (TUYỆT ĐỐI TUÂN THỦ):
 - Mọi bảng map, chỉ số lính, sprite/BSprite/palette, text phải giải mã trực tiếp từ file gốc trong `.jar` — CẤM gõ tay hay tự bịa thông số.
 - Chỗ nào code decompile bị rối/mơ hồ: bắt buộc đọc thẳng `bytecode-evidence/<Class>.javap.txt` để đối chiếu. Nếu vẫn chưa chắc 100%, ghi rõ `CHƯA XÁC MINH` và hỏi lại tôi — TUYỆT ĐỐI KHÔNG tự đoán công thức thay thế.
-- Không được báo xong chừng nào `python3 tools/verify-port-parity.py <slug>` chưa PASS.
+- Không được báo xong chừng nào `python3 tools/verify-port-parity.py ../<slug>-clone` chưa PASS.
 
 Bắt đầu từ Bước 1 & 2, lập kế hoạch 4 chặng rồi tự chạy lần lượt từ Chặng 1 đến Chặng 4 cho tới khi PASS toàn bộ cổng kiểm duyệt.
 ```

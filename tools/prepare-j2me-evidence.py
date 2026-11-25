@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Automated Phase-1 J2ME Evidence Generator for any game in games/<slug>/.
-1. Verifies games/<slug>/original/*.jar and extracts into analysis/recovered/ (if needed)
+Automated Phase-1 J2ME Evidence Generator for any standalone J2ME game project.
+1. Verifies <project>/original/*.jar and extracts into analysis/recovered/ (if needed)
 2. Runs `javap -c -p -v` on all .class files (validating non-empty output!)
 3. Runs Vineflower and/or CFR if available locally (or passed via --vineflower / --cfr)
 4. Generates analysis/CLASS-INDEX.md summarizing every class's size, key J2ME hooks,
@@ -31,10 +31,10 @@ def find_tool_bin(name: str) -> str:
         cand = pathlib.Path(java_home) / "bin" / name
         if cand.is_file() and os.access(cand, os.X_OK):
             return str(cand)
-    # 2. Check local game/tool-downloads bundled JDKs
+    # 2. Check local tools/tool-downloads bundled JDKs
     for pattern in (
-        str(ROOT / "game" / "tool-downloads" / "*" / "Contents" / "Home" / "bin" / name),
-        str(ROOT / "game" / "tool-downloads" / "*" / "bin" / name),
+        str(ROOT / "tools" / "tool-downloads" / "*" / "Contents" / "Home" / "bin" / name),
+        str(ROOT / "tools" / "tool-downloads" / "*" / "bin" / name),
     ):
         matches = sorted(glob.glob(pattern))
         for m in matches:
@@ -50,7 +50,9 @@ def find_decompiler_jar(explicit: str, patterns: list[str]) -> str:
         return explicit
     search_dirs = [
         ROOT / "tools",
-        ROOT / "game" / "tool-downloads",
+        ROOT / "tools" / "tool-downloads",
+        ROOT.parent / "j2me-cpp-porter" / "skills" / "jar-to-cpp-port" / "scripts",
+        pathlib.Path.home() / ".gemini" / "config" / "plugins" / "j2me-cpp-porter" / "skills" / "jar-to-cpp-port" / "scripts",
         pathlib.Path.home() / ".cache",
         pathlib.Path.home() / "Downloads",
     ]
@@ -184,7 +186,7 @@ def build_class_index(slug: str, jar_path: pathlib.Path, analysis_dir: pathlib.P
     md = [
         f"# Class & Resource Index — `{slug}`",
         "",
-        f"- **Original JAR**: `games/{slug}/original/{jar_path.name}` ({jar_path.stat().st_size:,} bytes)",
+        f"- **Original JAR**: `original/{jar_path.name}` ({jar_path.stat().st_size:,} bytes)",
         f"- **Classes**: {len(class_rows)} | **Decompilers present**: "
         f"Vineflower={'YES' if vf_dir.exists() and any(vf_dir.rglob('*.java')) else 'NO'}, "
         f"CFR={'YES' if cfr_dir.exists() and any(cfr_dir.rglob('*.java')) else 'NO'}, "
@@ -220,14 +222,24 @@ def build_class_index(slug: str, jar_path: pathlib.Path, analysis_dir: pathlib.P
     return out_md
 
 
+def resolve_game_dir(target: str) -> pathlib.Path:
+    cand = pathlib.Path(target).expanduser()
+    if cand.is_dir() and (cand / "original").is_dir():
+        return cand.resolve()
+    for base in (ROOT.parent / f"{target}-clone", ROOT.parent / target, ROOT / "games" / target):
+        if (base / "original").is_dir():
+            return base.resolve()
+    return (ROOT.parent / f"{target}-clone").resolve()
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Prepare full J2ME reverse-engineering evidence for a game slug.")
-    parser.add_argument("slug", help="Game folder slug under games/ (e.g. ancient-empires-2)")
+    parser = argparse.ArgumentParser(description="Prepare full J2ME reverse-engineering evidence for a game project.")
+    parser.add_argument("target", help="Game project path or slug (e.g. ../total-tournament-clone or total-tournament)")
     parser.add_argument("--vineflower", default="", help="Optional path to vineflower.jar")
     parser.add_argument("--cfr", default="", help="Optional path to cfr.jar")
     args = parser.parse_args()
 
-    game_dir = ROOT / "games" / args.slug
+    game_dir = resolve_game_dir(args.target)
     orig_dir = game_dir / "original"
     analysis_dir = game_dir / "analysis"
     jars = sorted(orig_dir.glob("*.jar"))
@@ -241,7 +253,7 @@ def main():
     vf_jar = find_decompiler_jar(args.vineflower, ["*vineflower*.jar", "*fernflower*.jar"])
     cfr_jar = find_decompiler_jar(args.cfr, ["*cfr*.jar"])
 
-    print(f"[INFO] Game: {args.slug} | JAR: {jar_path.name}")
+    print(f"[INFO] Project: {game_dir} | JAR: {jar_path.name}")
     print(f"[INFO] java={java_bin or 'MISSING'} | javap={javap_bin or 'MISSING'}")
     print(f"[INFO] vineflower={vf_jar or 'not found'} | cfr={cfr_jar or 'not found'}")
 
@@ -249,8 +261,8 @@ def main():
     run_javap_all(javap_bin, analysis_dir / "recovered", analysis_dir / "bytecode-evidence")
     run_decompiler(java_bin, "Vineflower", vf_jar, jar_path, analysis_dir / "decompiled-vineflower")
     run_decompiler(java_bin, "CFR", cfr_jar, jar_path, analysis_dir / "decompiled-cfr")
-    build_class_index(args.slug, jar_path, analysis_dir)
-    print(f"[DONE] Evidence ready for games/{args.slug}/analysis/")
+    build_class_index(game_dir.name, jar_path, analysis_dir)
+    print(f"[DONE] Evidence ready for {analysis_dir}")
 
 
 if __name__ == "__main__":

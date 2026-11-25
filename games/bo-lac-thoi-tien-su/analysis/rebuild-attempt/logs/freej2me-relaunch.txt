@@ -1,4 +1,0 @@
-MIDlet-1: Bo lac thoi tien su, icon.png, tribes
-Create MIDlet
-Create Canvas:240, 320
-Create Canvas:240, 320

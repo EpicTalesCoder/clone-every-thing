@@ -1,5 +1,5 @@
 ---
-description: Enforce 1:1 source-faithful J2ME decompilation and web porting for all games under games/*/web-port/
+description: Enforce 1:1 source-faithful J2ME decompilation and web porting for standalone <slug>-clone projects
 ---
 
 # J2ME Faithful Porting Rule
@@ -8,21 +8,21 @@ description: Enforce 1:1 source-faithful J2ME decompilation and web porting for 
 
 Whenever the user asks to decompile, port, fix parity, or import a J2ME game (even with a short prompt like `"decompile game total tournament"`), automatically follow this exact sequence without waiting to be told where files are:
 
-1. **Locate or scaffold the game**:
-   - Check `games/` and `games/games-manifest.json` to resolve `<slug>`. If the user provides a new `.jar` path, run `python3 tools/new-game-port.py <slug> <jar-path> "<Display Name>"`.
+1. **Locate or scaffold the standalone game project (`../<slug>-clone/`)**:
+   - Never commit game projects inside REA's `main` branch (`clone-every-game`). Each game lives in its own standalone repository (`../<slug>-clone/`). If the user provides a new `.jar` path, run `python3 tools/new-game-port.py <slug> <jar-path> "<Display Name>"` (which scaffolds `../<slug>-clone/`).
 2. **Load project standards first**:
    - Read `docs/J2ME_DECOMPILE_FIDELITY_GUIDE.md`, `.agents/skills/j2me-reverse-and-web-port/SKILL.md`, and `.agents/skills/j2me-reverse-and-web-port/references/decompile-to-source-parity.md`.
 3. **Prepare evidence before coding**:
-   - Run `python3 tools/prepare-j2me-evidence.py <slug>` so `analysis/CLASS-INDEX.md`, `analysis/bytecode-evidence/*.javap.txt` (>100B each), and `analysis/decompiled-*/*.java` are up to date.
+   - Run `python3 tools/prepare-j2me-evidence.py ../<slug>-clone` so `analysis/CLASS-INDEX.md`, `analysis/bytecode-evidence/*.javap.txt` (>100B each), and `analysis/decompiled-*/*.java` are up to date.
 4. **Plan & execute in 4 gated stages**:
-   - **Stage 1**: Write/update `games/<slug>/analysis/CLASS-RESPONSIBILITIES.md` (classes, state machine, binary formats, formulas with `Class.java:line`).
+   - **Stage 1**: Write/update `../<slug>-clone/analysis/CLASS-RESPONSIBILITIES.md` (classes, state machine, binary formats, formulas with `Class.java:line`).
    - **Stage 2**: Build 100% real binary decoders + `render-original.js` (exact MIDP anchors, `drawRegionMIDP`, integer `drawRectMIDP`/`drawLineMIDP`, `setClip`, original bitmap font + NFD VI diacritics, `s0` sprite HUD, original sprites/maps/curtains — zero `fillRect` placeholders or blurry system `fillText` replacing bitmap fonts).
    - **Stage 3**: Port core gameplay (`game.js`: input/mouse+keys, movement, combat/economy formulas, nav-table AI, round/save lifecycle) **plus mandatory 2–4 player Multiplayer** (`multiplayer.js` + docked `.floating-toolbar` lobby button & `#mp-lobby` overlay, Host-authoritative tick + background Web Worker + `?mp=<code>` auto-join + Quad Transport `/api/mp` / `BroadcastChannel` / `ntfy` / MQTT-WSS) citing `// Port of Class.java:line`, keeping `.floating-toolbar` outside `#game` bounds so HUD/softkeys stay unobstructed.
-   - **Stage 4**: Run `python3 tools/verify-port-parity.py <slug>` (MUST exit 0 / PASS!), `python3 tools/build-portal.py`, and run a live headless browser visual QA walkthrough (capturing and visually inspecting PNG screenshots across startup, all menus in VI & EN, loading splash, pause backdrop, scoreboard, active gameplay, **plus a 2-tab Host + Guest `?mp=<code>` multiplayer sync test** with zero console errors).
+   - **Stage 4**: Run `python3 tools/verify-port-parity.py ../<slug>-clone` (MUST exit 0 / PASS!), `npm --prefix ../<slug>-clone run build` (via `tools/build-dist.py`), and run a live headless browser visual QA walkthrough (capturing and visually inspecting PNG screenshots across startup, all menus in VI & EN, loading splash, pause backdrop, scoreboard, active gameplay, **plus a 2-tab Host + Guest `?mp=<code>` multiplayer sync test** with zero console errors).
 
 ## Zero-Invention Evidence Contract (Hard Locks)
 
-When creating, fixing, or extending any J2ME web port under `games/<slug>/web-port/`:
+When creating, fixing, or extending any J2ME web port under `../<slug>-clone/web-port/`:
 
 1. **No "from-memory" rewrites or placeholder clones**:
    - Do NOT invent game mechanics, unit stats, map layouts, or draw placeholder `fillRect` geometry when the original `.jar` contains real sprites, maps, and formulas.
@@ -36,18 +36,18 @@ When creating, fixing, or extending any J2ME web port under `games/<slug>/web-po
    - Respect Java signed integer/byte semantics (`s8`, `s16`, `Math.trunc` integer division) and MIDP 2.0 `Graphics` anchors, clipping, and 8 `Sprite.TRANS_*` transforms.
 4. **Mandatory Source Citations & Automated Gate**:
    - Add concise comments (`// Port of <Class>.java:<lines>`) on ported rendering passes, map/table decoders, state transitions, and combat/economy formulas.
-   - **NEVER report a port complete** until `python3 tools/verify-port-parity.py <slug>` exits `0` (`RESULT: PASS`) and `python3 tools/build-portal.py` succeeds.
-5. **Never modify `games/<slug>/original/*.jar`**.
+   - **NEVER report a port complete** until `python3 tools/verify-port-parity.py ../<slug>-clone` exits `0` (`RESULT: PASS`) and `npm --prefix ../<slug>-clone run build` succeeds.
+5. **Never modify `../<slug>-clone/original/*.jar`**.
 
 ## Deep Decompilation, Binary Integrity, UI & Runtime Parity Rules
 
-Extracted from `games/j2me-cpp-porter` & `games/port_java_to_switch_nro_plan.md` to prevent recurring J2ME porting bugs across Web (HTML5) and Native (Desktop C++17 SDL2 / Switch `.nro`) targets:
+Extracted from `../j2me-cpp-porter` to prevent recurring J2ME porting bugs across Web (HTML5) and Native (Desktop C++17 SDL2) targets:
 
 1. **Dual-Decompiler + Bytecode Cross-Check (Offline Jars Available)**:
-   - Always decompile every `.jar` with **both** Vineflower and CFR (`games/j2me-cpp-porter/skills/jar-to-cpp-port/scripts/vineflower-1.12.0.jar` & `cfr-0.152.jar`, plus `javap -c -p -v`), read `META-INF/MANIFEST.MF`, and record `origW x origH`, fixed tick `frameDelayMs`, font format, binary `.ui`/map schemas, event opcodes, and `RecordStore` layout before coding.
+   - Always decompile every `.jar` with **both** Vineflower and CFR (`../j2me-cpp-porter/skills/jar-to-cpp-port/scripts/vineflower-1.12.0.jar` & `cfr-0.152.jar`, plus `javap -c -p -v`), read `META-INF/MANIFEST.MF`, and record `origW x origH`, fixed tick `frameDelayMs`, font format, binary `.ui`/map schemas, event opcodes, and `RecordStore` layout before coding.
 2. **Magic-Byte Asset Verification & Stripped-PNG Reconstruction**:
    - **Never trust file extensions inside a `.jar`** (e.g. PNGs disguised as `.mid`/`.bin` or XOR-100 / length-prefixed XOR streams). Inspect magic bytes first.
-   - For stripped-header PNG blobs (`[w, h, bitDepth, colorType, PLTE, optional "tRNS", IDAT]`), reconstruct full `IHDR`/`PLTE`/`tRNS`/`IDAT`/`IEND` chunks with valid CRC32 and verify every extracted PNG with `zlib.decompress(IDAT)` (see `games/j2me-cpp-porter/skills/jar-to-cpp-port/resources/prepare_assets.py`).
+   - For stripped-header PNG blobs (`[w, h, bitDepth, colorType, PLTE, optional "tRNS", IDAT]`), reconstruct full `IHDR`/`PLTE`/`tRNS`/`IDAT`/`IEND` chunks with valid CRC32 and verify every extracted PNG with `zlib.decompress(IDAT)` (see `../j2me-cpp-porter/skills/jar-to-cpp-port/resources/prepare_assets.py`).
 3. **Exact Java Arithmetic, Signed Tables & State Lifecycle**:
    - **Signed byte/short & collision checks**: distinguish `s8` vs `u8`; never assume non-empty collision flags are `> 0` when source checks `!== 0` (e.g. negative slope/ramp offsets like `-1`).
    - **Negative scroll shifts**: Java `x >> k` paired with `x & ((1 << k) - 1)` floors toward `-∞` — use floor division (`Math.floor(x / 16)` / `floorDivPow2`), **never** truncating `/` which stalls negative camera scrolling.

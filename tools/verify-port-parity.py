@@ -20,13 +20,23 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
+def resolve_game_dir(target: str) -> tuple[str, pathlib.Path]:
+    cand = pathlib.Path(target).expanduser()
+    if cand.is_dir() and ((cand / "original").is_dir() or (cand / "web-port").is_dir()):
+        resolved = cand.resolve()
+        return resolved.name, resolved
+    for base in (ROOT.parent / f"{target}-clone", ROOT.parent / target, ROOT / "games" / target):
+        if base.is_dir():
+            return target, base.resolve()
+    return target, (ROOT.parent / f"{target}-clone").resolve()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Verify J2ME web-port evidence, source citations, assets, and tests.")
-    parser.add_argument("slug", help="Game folder slug under games/")
+    parser.add_argument("target", help="Standalone game project path or slug (e.g. ../total-tournament-clone or total-tournament)")
     args = parser.parse_args()
 
-    slug = args.slug
-    game_dir = ROOT / "games" / slug
+    slug, game_dir = resolve_game_dir(args.target)
     orig_dir = game_dir / "original"
     analysis_dir = game_dir / "analysis"
     web_dir = game_dir / "web-port"
@@ -42,14 +52,14 @@ def main():
     # Gate 1: Original JAR & recovered/
     jars = sorted(orig_dir.glob("*.jar")) if orig_dir.exists() else []
     if not jars or jars[0].stat().st_size == 0:
-        failures.append(f"Missing original .jar in games/{slug}/original/")
+        failures.append(f"Missing original .jar in {game_dir.name}/original/")
     else:
         passed.append(f"Original JAR intact: {jars[0].name} ({jars[0].stat().st_size:,} B)")
 
     rec_dir = analysis_dir / "recovered"
     rec_classes = list(rec_dir.rglob("*.class")) if rec_dir.exists() else []
     if not rec_classes:
-        failures.append(f"No extracted .class files in games/{slug}/analysis/recovered/ (run prepare-j2me-evidence.py)")
+        failures.append(f"No extracted .class files in {game_dir.name}/analysis/recovered/ (run prepare-j2me-evidence.py)")
     else:
         passed.append(f"Recovered {len(rec_classes)} .class files")
 
@@ -58,7 +68,7 @@ def main():
     jp_files = list(jp_dir.rglob("*.javap.txt")) if jp_dir.exists() else []
     valid_jp = [f for f in jp_files if f.stat().st_size > 100]
     if not valid_jp:
-        failures.append(f"No valid (>100B) javap dumps in games/{slug}/analysis/bytecode-evidence/ (run prepare-j2me-evidence.py)")
+        failures.append(f"No valid (>100B) javap dumps in {game_dir.name}/analysis/bytecode-evidence/ (run prepare-j2me-evidence.py)")
     elif len(valid_jp) < len(rec_classes):
         warnings.append(f"Only {len(valid_jp)}/{len(rec_classes)} classes have valid javap dumps")
     else:
@@ -74,7 +84,7 @@ def main():
     if (analysis_dir / "CLASS-RESPONSIBILITIES.md").exists():
         passed.append("CLASS-RESPONSIBILITIES.md present")
     else:
-        failures.append(f"Missing games/{slug}/analysis/CLASS-RESPONSIBILITIES.md (required from Stage 1)")
+        failures.append(f"Missing {game_dir.name}/analysis/CLASS-RESPONSIBILITIES.md (required from Stage 1)")
 
     # Gate 3: Explicit Java source citations + no unresolved UNVERIFIED markers
     js_files = [
@@ -83,7 +93,7 @@ def main():
     ] if web_dir.exists() else []
 
     if not js_files:
-        failures.append(f"No JS source files found in games/{slug}/web-port/")
+        failures.append(f"No JS source files found in {game_dir.name}/web-port/")
     else:
         cite_re = re.compile(r"\b[A-Za-z0-9_$]+\.java:\d+")
         unverified_re = re.compile(r"\bUNVERIFIED\b")
@@ -116,7 +126,7 @@ def main():
         assets_dir = web_dir / "assets"
         asset_count = len([f for f in assets_dir.rglob("*") if f.is_file()]) if assets_dir.exists() else 0
         if asset_count == 0:
-            failures.append(f"games/{slug}/web-port/assets/ is empty")
+            failures.append(f"{game_dir.name}/web-port/assets/ is empty")
         else:
             passed.append(f"Extracted web-port assets: {asset_count} files")
 
@@ -164,11 +174,11 @@ def main():
         html_txt = html_path.read_text(encoding="utf-8", errors="replace") if html_path.exists() else ""
         game_js_txt = game_js_path.read_text(encoding="utf-8", errors="replace") if game_js_path.exists() else ""
         if not mp_js.exists():
-            failures.append(f"Missing mandatory multiplayer module: games/{slug}/web-port/multiplayer.js")
+            failures.append(f"Missing mandatory multiplayer module: {game_dir.name}/web-port/multiplayer.js")
         elif "mp-lobby" not in html_txt or "btn-mp-lobby" not in html_txt:
-            failures.append(f"games/{slug}/web-port/index.html missing mandatory multiplayer UI (#mp-lobby / #btn-mp-lobby)")
+            failures.append(f"{game_dir.name}/web-port/index.html missing mandatory multiplayer UI (#mp-lobby / #btn-mp-lobby)")
         elif "MultiplayerClient" not in game_js_txt:
-            failures.append(f"games/{slug}/web-port/game.js does not wire MultiplayerClient")
+            failures.append(f"{game_dir.name}/web-port/game.js does not wire MultiplayerClient")
         else:
             passed.append("Mandatory Multiplayer wired (multiplayer.js + #mp-lobby + MultiplayerClient)")
 
@@ -185,21 +195,13 @@ def main():
 
     test_files = sorted((web_dir / "tests").glob("*.test.mjs")) if (web_dir / "tests").exists() else []
     if not test_files:
-        warnings.append(f"No unit tests found in games/{slug}/web-port/tests/*.test.mjs")
+        warnings.append(f"No unit tests found in {game_dir.name}/web-port/tests/*.test.mjs")
     else:
         proc = subprocess.run(["node", "--test", *[str(t) for t in test_files]], capture_output=True, text=True)
         if proc.returncode != 0:
             failures.append(f"Unit tests FAILED: {(proc.stderr or proc.stdout).strip()[:300]}")
         else:
             passed.append(f"Unit tests PASSED ({len(test_files)} test file(s))")
-
-    manifest_path = ROOT / "games" / "games-manifest.json"
-    if manifest_path.exists():
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if any(g.get("slug") == slug for g in manifest):
-            passed.append("Registered in games/games-manifest.json")
-        else:
-            failures.append(f"Game '{slug}' is NOT registered in games/games-manifest.json")
 
     # Gate 6: Visual Oracle reference screenshots check (advisory)
     ref_dirs = [
@@ -213,7 +215,7 @@ def main():
     if ref_pngs:
         passed.append(f"Visual Oracle screenshots present: {len(ref_pngs)} PNG(s)")
     else:
-        warnings.append(f"No FreeJ2ME reference screenshots in games/{slug}/analysis/reference-frames/ (recommended for visual diff)")
+        warnings.append(f"No FreeJ2ME reference screenshots in {game_dir.name}/analysis/reference-frames/ (recommended for visual diff)")
 
     # Print report
     print(f"=== J2ME Parity Gate Report: {slug} ===")
